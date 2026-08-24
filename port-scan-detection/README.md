@@ -7,6 +7,7 @@ Table used: NTANetAnalytics (network traffic/flow logs)
 Workspace: LAW-Cyber-Range (a controlled lab/range environment)
 Investigation window: 2026-06-02 00:00 → 2026-06-03 00:00
 Result: 41 matching rows, with one internal host standing out clearly from the rest (see Findings).
+
 2. The Query
 kusto
 // Set your investigation window once at the top, reuse it everywhere.
