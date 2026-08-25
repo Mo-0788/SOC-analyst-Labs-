@@ -1,13 +1,13 @@
-### Brute-Force & Suspicious Remote Logon Detection with KQL — Microsoft Defender Advanced Hunting 
+# Brute-Force & Suspicious Remote Logon Detection with KQL — Microsoft Defender Advanced Hunting 
 
-# Table of Contents
-# Overview
-# Query 1 — Failed Logons / Brute-Force Detection
-# Query 2 — Successful Logon Following Failures
-# Query 3 — Remote Interactive Logons from External (Public) IPs
-# Combined Findings — Connecting the Three Queries
-# Conclusion — What Is the Threat?
-# Recommended Next Steps
+## Table of Contents
+## Overview
+## Query 1 — Failed Logons / Brute-Force Detection
+## Query 2 — Successful Logon Following Failures
+## Query 3 — Remote Interactive Logons from External (Public) IPs
+## Combined Findings — Connecting the Three Queries
+## Conclusion — What Is the Threat?
+## Recommended Next Steps
 
 # 1.  Overview
 
