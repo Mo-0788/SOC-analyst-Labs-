@@ -46,7 +46,7 @@ When a SOC analyst uses it: as a first pass over a shift, a day, or an incident 
 What the result looks like: a table with RemoteIP, DeviceName, FailureReason, a FailedCount number, and an Accounts list — sorted so the noisiest source/target pair is at the top. (see the screenshot above)
 
 ## 3. Query 2 — Successful Logon Following Failures
-
+```kusto
 let failures =
 DeviceLogonEvents
     | where ActionType == "LogonFailed"
@@ -61,6 +61,7 @@ failures
 | where Failures > 10 and Successes > 0
 | project AccountName, DeviceName, RemoteIP, Failures, Successes, LastSuccess
 | sort by Failures desc
+```
 
 ### In simple English:
 this query answers the important follow-up question that Query 1 can't: did any of those brute-force attempts actually work? It builds two separate lists — one counting failed logons, one counting successful logons — for the same account, device, and source IP. 
@@ -82,13 +83,14 @@ The annu and guest rows also come from internal/blank source IPs, consistent wit
 The genuinely concerning rows are the ones with a public source IP: 95.217.###.##, 59.15.1##.##, 111.68.10#.###, 201.###.98.###, and 80.66.##.## — each brute-forced the administrator account dozens of times and then succeeded at least once.
 
 ## 4. Query 3 — Remote Interactive Logons from External (Public) IPs
-
+```kusto
 DeviceLogonEvents
 | where ActionType == "LogonSuccess"
 | where LogonType in ("RemoteInteractive", "Network", "Unlock")
 | where RemoteIPType == "Public"
 | summarize count = count() by RemoteIP, DeviceName
 | sort by ['count'] desc
+```
 
 ### In simple English: 
 this query looks only at logons that succeeded, filters to the types of logons that matter for remote access (RemoteInteractive — like RDP, Network — like accessing a shared drive, and Unlock — unlocking an already-open session), and then keeps only the ones where the source IP is public (i.e., coming from outside the organization's network, not an internal machine).
