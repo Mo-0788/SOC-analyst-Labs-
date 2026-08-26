@@ -20,6 +20,7 @@ Run in this order, these three queries take an analyst from "something looks noi
 
 ## 2. Query 1 — Failed Logons / Brute-Force Detection 
 
+```kusto
 // Set your investigation window once at the top, reuse it everywhere. or you can remove it in case you want all time which is a lot of data 
 let startTime = datetime(2026-08-01 00:00:00);
 let endTime   = datetime(2026-08-02 00:00:00);
@@ -33,6 +34,7 @@ DeviceLogonEvents
     by RemoteIP, DeviceName, FailureReason
 | where FailedCount > 10
 | sort by FailedCount desc
+``` 
 
 <img width="1253" height="695" alt="brute-force query number one " src="https://github.com/user-attachments/assets/874be44a-01ed-4801-9db1-9c8133bc4272" />
 
