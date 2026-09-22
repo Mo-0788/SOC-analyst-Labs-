@@ -36,7 +36,10 @@ DeviceLogonEvents
 | sort by FailedCount desc
 ``` 
 
-<img width="1253" height="695" alt="brute-force query number one " src="https://github.com/user-attachments/assets/874be44a-01ed-4801-9db1-9c8133bc4272" />
+
+
+<img width="1253" height="695" alt="brute-force query number one " src="https://github.com/user-attachments/assets/3d95d6db-d35b-4038-9e6b-f62591f55be0" />
+
 
  ### In simple English: 
  this query looks through the sign-in logs for a chosen time window and pulls out every logon attempt that failed. It then groups those failures by where the attempt came from (RemoteIP), which machine it targeted (DeviceName), and why it failed (FailureReason) — and counts how many failures happened in each group. 
@@ -67,13 +70,16 @@ failures
 this query answers the important follow-up question that Query 1 can't: did any of those brute-force attempts actually work? It builds two separate lists — one counting failed logons, one counting successful logons — for the same account, device, and source IP. 
 Then it joins the two lists together and keeps only the rows where there were more than 10 failures AND at least 1 success from that exact same combination. That pattern — many failures, then a success — is a strong sign an account was cracked, not just probed.
 
-<img width="1252" height="701" alt="failuresand then success all result with hidden IP " src="https://github.com/user-attachments/assets/93bb0afb-5b2f-4851-bec7-32866a80c995" />
+
+<img width="1252" height="701" alt="failuresand then success all result with hidden IP " src="https://github.com/user-attachments/assets/ee2791a6-9352-4bc3-9fda-8c41a7dceb22" />
+
 
 
 When a SOC analyst uses it: right after running Query 1, to separate "this was just noise" from "this account may now be compromised." This is the query that turns a low-priority alert into a high-priority incident.
 
 What the result looks like: a table with AccountName, DeviceName, RemoteIP, Failures, Successes, and LastSuccess (the timestamp of the successful logon) — sorted with the highest failure counts first.
 this table is my real result of this query you can see the yellow highlighted is public IP address tried to get access as administrator 40 times and he gains the access one time.
+
 <img width="776" height="640" alt="log table query 2 (try many time and get access)" src="https://github.com/user-attachments/assets/e1b3aa18-9ddf-4482-a259-6aae32f23059" />
 
 Key observations in my table:
