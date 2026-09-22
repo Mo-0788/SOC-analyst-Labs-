@@ -1,19 +1,19 @@
 Port Scan Detection with KQL — Microsoft Defender Advanced Hunting
-1. Overview
 
+1. Overview
 This investigation uses KQL (Kusto Query Language) in Microsoft Defender's Advanced Hunting module to detect a classic network-security pattern: one source IP touching an unusually large number of distinct destination ports — the signature of a port scan.
 
 Table used: NTANetAnalytics (network traffic/flow logs)
-Workspace: LAW-Cyber-Range (a controlled lab/range environment)
+Workspace:  (a controlled lab/range environment)
 Investigation window: 2026-06-02 00:00 → 2026-06-03 00:00
 Result: 41 matching rows, with one internal host standing out clearly from the rest (see Findings).
 
 2. The Query
-kusto
+
+```kusto
 // Set your investigation window once at the top, reuse it everywhere.
 let startTime = datetime(2026-06-02 00:00:00);
 let endTime   = datetime(2026-06-03 00:00:00);
-
 NTANetAnalytics
 | where TimeGenerated between (startTime .. endTime)
 | where FlowStatus == "Allowed"
@@ -21,6 +21,8 @@ NTANetAnalytics
 | summarize DistinctPorts = dcount(DestPort), Ports = make_set(DestPort, 50) by SrcIp, DestIp, AclRule
 | where DistinctPorts > 50
 | sort by DistinctPorts desc
+```
+
 3. Line-by-Line Breakdown (for beginners)
 let startTime = datetime(2026-06-02 00:00:00);
 let endTime = datetime(2026-06-03 00:00:00);
@@ -66,7 +68,8 @@ A table where each row represents one attacker→target relationship, showing ex
 
 4. Findings
 
-<img width="1271" height="701" alt="port scann result" src="https://github.com/user-attachments/assets/67fed55e-c737-477a-a5f9-0991e951ed5e" />
+<img width="1271" height="701" alt="port scann result" src="https://github.com/user-attachments/assets/bf2d9039-6b86-48a3-bad2-21601a7383fc" />
+
 
 Out of 41 result rows, the data splits cleanly into two very different groups:
 
@@ -75,7 +78,7 @@ Behavior	Distinct-port range	What it means
 Remaining rows (various sources)	56 – 162 distinct ports	Much smaller — plausibly response/reply traffic, still worth reviewing, but far less severe
 🚨 Primary finding: internal host running a mass port scan
 
-Source IP: 10.0.0.8
+Source IP: 1#.#.#.8
 
 This single host swept 17 different internal destination IPs, hitting thousands of distinct ports on each one — this is not normal application traffic. Real services use a small, fixed set of ports (e.g., 443, 3389, 445). Touching 4,000+ ports on a single destination in a 24-hour window is the definition of a scan.
 
@@ -115,13 +118,13 @@ Rows where the destination IPs from above appear as the source, talking back to 
 
 5. A Note on IP Masking
 
-All destination IPs shown in this write-up have the second octet masked (e.g. 10.xx.0.32) before publishing to GitHub. Even though these addresses are private/internal (RFC 1918) space and not publicly routable, masking avoids exposing the internal network's addressing scheme or segment layout to anyone who might read this repository. The source IP (10.0.0.8) is left unmasked intentionally, since identifying the attacking host is the entire point of the detection.
+All destination IPs shown in this write-up have the second octet masked (e.g. 10.xx.0.32) before publishing to GitHub. Even though these addresses are private/internal (RFC 1918) space and not publicly routable, masking avoids exposing the internal network's addressing scheme or segment layout to anyone who might read this repository. The source IP (1#.#.#.8) is left unmasked intentionally, since identifying the attacking host is the entire point of the detection.
 
 6. Conclusion
 
 Which ports were scanned? Thousands of distinct ports per target — ranging from well-known service ports (22, 80, 443, 445, 3389) to large blocks of high/ephemeral ports — consistent with an automated, exhaustive port sweep rather than a targeted service check.
 
-Who is the source? A single internal host, 10.0.0.8.
+Who is the source? A single internal host, 1#.#.#.8.
 
 How dangerous is it?
 
@@ -131,6 +134,6 @@ Combined, this indicates either (a) a compromised or misconfigured internal host
 
 Recommended next steps:
 
-Confirm whether 10.0.0.8 is an authorized scanning/security tool (the scan_engine_* rule names suggest this may be a sanctioned scanner in this range) — if not authorized, isolate the host immediately.
+Confirm whether 1#.#.#.8 is an authorized scanning/security tool (the scan engine_* rule names suggest this may be a sanctioned scanner in this range) — if not authorized, isolate the host immediately.
 Replace the *-allow-all-* NSG rules with least-privilege rules scoped to only the ports each service actually needs.
 Add an alert/detection rule based on this exact query (DistinctPorts > 50 from a single source) so future scans — authorized or not — are flagged automatically instead of found manually.
