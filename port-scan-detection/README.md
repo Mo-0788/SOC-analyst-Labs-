@@ -82,7 +82,7 @@ Source IP: 1#.#.#.8
 
 This single host swept 17 different internal destination IPs, hitting thousands of distinct ports on each one — this is not normal application traffic. Real services use a small, fixed set of ports (e.g., 443, 3389, 445). Touching 4,000+ ports on a single destination in a 24-hour window is the definition of a scan.
 
-Top 10 targets hit by 10.0.0.8 (destination IPs partially masked — see security note below):
+Top 10 targets hit by 1#.#.#.8 (destination IPs partially masked — see security note below):
 
 Destination (masked)	Distinct Ports Hit	Matching Firewall Rule
 10.xx.0.32	4,842	danger-allow-all-inbound
