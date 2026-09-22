@@ -114,7 +114,7 @@ These rule names are effectively self-labeled "allow everything" rules. The scan
 
 Secondary observation: low-volume "reverse" traffic
 
-Rows where the destination IPs from above appear as the source, talking back to 10.0.0.8 under a rule called platformrule, show much smaller distinct-port counts (56–162). This pattern is consistent with normal reply/response traffic generated as a side effect of the scan (targets replying on ephemeral ports), not a second attacker. It's included in the results because the same dcount(DestPort) > 50 threshold catches it too — worth knowing so it isn't mistaken for a second scanning host.
+Rows where the destination IPs from above appear as the source, talking back to 1#.#.#.8 under a rule called platformrule, show much smaller distinct-port counts (56–162). This pattern is consistent with normal reply/response traffic generated as a side effect of the scan (targets replying on ephemeral ports), not a second attacker. It's included in the results because the same dcount(DestPort) > 50 threshold catches it too — worth knowing so it isn't mistaken for a second scanning host.
 
 5. A Note on IP Masking
 
