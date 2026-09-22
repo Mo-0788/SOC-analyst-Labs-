@@ -80,13 +80,16 @@ When a SOC analyst uses it: right after running Query 1, to separate "this was j
 What the result looks like: a table with AccountName, DeviceName, RemoteIP, Failures, Successes, and LastSuccess (the timestamp of the successful logon) — sorted with the highest failure counts first.
 this table is my real result of this query you can see the yellow highlighted is public IP address tried to get access as administrator 40 times and he gains the access one time.
 
+
 <img width="776" height="640" alt="log table query 2 (try many time and get access)" src="https://github.com/user-attachments/assets/e1b3aa18-9ddf-4482-a259-6aae32f23059" />
+
 
 Key observations in my table:
 Six of the ten rows target the built-in administrator account specifically — attackers are guessing the default admin login, not random usernames. This is a textbook credential-stuffing / RDP brute-force pattern.
 root on linux-scan-break-fix-learn from 10.#.#.# (a private/internal IP) is your internal vulnerability-scanning engine authenticating repeatedly as part of normal scanning behavior — this is benign, not an attack. High failure counts here are expected because scanners often test many credential combinations by design.
 The annu and guest rows also come from internal/blank source IPs, consistent with internal automation/remediation accounts and lab test accounts rather than outside attackers.
 The genuinely concerning rows are the ones with a public source IP: 95.217.###.##, 59.15.1##.##, 111.68.10#.###, 201.###.98.###, and 80.66.##.## — each brute-forced the administrator account dozens of times and then succeeded at least once.
+
 
 ## 4. Query 3 — Remote Interactive Logons from External (Public) IPs
 ```kusto
@@ -102,10 +105,14 @@ DeviceLogonEvents
 this query looks only at logons that succeeded, filters to the types of logons that matter for remote access (RemoteInteractive — like RDP, Network — like accessing a shared drive, and Unlock — unlocking an already-open session), and then keeps only the ones where the source IP is public (i.e., coming from outside the organization's network, not an internal machine).
 It counts how many times each public IP successfully logged into each device.
 
+
 <img width="1262" height="707" alt="query specifieed for the external Ip who logon ssuccessful " src="https://github.com/user-attachments/assets/1e51da0e-57eb-45f1-a5b0-d0ebf08c6a35" />
 
+
 As a SOC analyst  I use it to get a full picture of who from the outside world can — and does — reach company machines remotely. It's also the query that lets you cross-check: if an IP shows up here and it also appeared in Query 2's "brute-force that succeeded" list, that's confirmation the access wasn't a fluke.
+
 ### Findings from query 3:
+
 1- 54 unique public IP addresses successfully logged into 31 different internal devices during the captured period — meaning the environment has real, active exposure to the public internet, not just theoretical risk.
 2- Most of these are almost certainly legitimate remote staff — high, steady logon counts from one IP into one personally-named device (e.g. 73.45.@@.# → adam-vm with 25 logons, 89.45.#.## → ###-vm with 18 logons, 98.147.249.### → ###ce-vm). One person, one machine, a normal daily pattern — this looks like people working from home via RDP.
 3- A smaller set of IPs stand out because they don't fit that pattern — one external IP reaching multiple different, unrelated corporate machines:
@@ -146,6 +153,7 @@ RDP/remote-logon ports where possible — put remote access behind a VPN or a ju
 (failures-then-success join) so any future successful brute-force is flagged automatically instead of found through manual review.
 
 this is one of the IP was attacking the network see in the red highlighted how suspicious he is (60 of 100) that`s serious threat
+
 
 <img width="1259" height="698" alt="highited suspicious public IP attacking cyber range nework " src="https://github.com/user-attachments/assets/dda992f8-ba72-4701-b9e1-68a4612896b2" />
 
