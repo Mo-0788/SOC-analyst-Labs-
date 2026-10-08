@@ -78,10 +78,10 @@ earlier version of the query
 
 
 
-When a SOC analyst uses it: right after running Query 1, to separate "this was just noise" from "this account may now be compromised." This is the query that turns a low-priority alert into a high-priority incident.
+When I run this query  after Query 1, to separate "this was just noise" from "this account may now be compromised." This is the query that turns a low-priority alert into a high-priority incident.
 
 What the result looks like: a table with AccountName, DeviceName, RemoteIP, Failures, Successes, and LastSuccess (the timestamp of the successful logon) — sorted with the highest failure counts first.
-this table is my real result of this query you can see the yellow highlighted is public IP address tried to get access as administrator 40 times and he gains the access one time.
+This table is my real result of this query. The yellow-highlighted row is a public IP address that tried to log in as adm********* 40 times and gained access once.
 
 earlier version of the query
 <img width="776" height="640" alt="log table query 2 (try many time and get access)" src="https://github.com/user-attachments/assets/e1b3aa18-9ddf-4482-a259-6aae32f23059" />
@@ -89,7 +89,7 @@ earlier version of the query
 
 Key observations in my table:
 Six of the ten rows target the built-in administrator account specifically — attackers are guessing the default admin login, not random usernames. This is a textbook credential-stuffing / RDP brute-force pattern.
-root on linux-scan-break-fix-learn from 10.#.#.# (a private/internal IP) is your internal vulnerability-scanning engine authenticating repeatedly as part of normal scanning behavior — this is benign, not an attack. High failure counts here are expected because scanners often test many credential combinations by design.
+Root on ###-scan-##-###-### from 10.#.#.# (a private/internal IP) is our internal vulnerability-scanning engine authenticating repeatedly as part of normal scanning behavior — this is benign, not an attack. High failure counts here are expected because scanners often test many credential combinations by design.
 The annu and guest rows also come from internal/blank source IPs, consistent with internal automation/remediation accounts and lab test accounts rather than outside attackers.
 The genuinely concerning rows are the ones with a public source IP: 95.217.###.##, 59.15.1##.##, 111.68.10#.###, 201.###.98.###, and 80.66.##.## — each brute-forced the administrator account dozens of times and then succeeded at least once.
 
@@ -187,8 +187,8 @@ As a SOC analyst  I use it to get a full picture of who from the outside world c
 ### Findings from query 3:
 
 1- 54 unique public IP addresses successfully logged into 31 different internal devices during the captured period — meaning the environment has real, active exposure to the public internet, not just theoretical risk.
-2- Most of these are almost certainly legitimate remote staff — high, steady logon counts from one IP into one personally-named device (e.g. 73.45.@@.# → adam-vm with 25 logons, 89.45.#.## → ###-vm with 18 logons, 98.147.249.### → ###ce-vm). One person, one machine, a normal daily pattern — this looks like people working from home via RDP.
-3- A smaller set of IPs stand out because they don't fit that pattern — one external IP reaching multiple different, unrelated corporate machines:
+2- Most of these are almost certainly legitimate remote staff — high, steady logon counts from one IP into one personally-named device (e.g. 73.45.@@.# → ###-vm with 25 logons, 89.45.#.## → ###-vm with 18 logons, 98.147.###.### → ###ce-vm). One person, one machine, a normal daily pattern — this looks like people working from home via RDP.
+
 
 ## 5. Combined Findings — Connecting the Three Queries 
 
