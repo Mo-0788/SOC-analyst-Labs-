@@ -192,13 +192,9 @@ As a SOC analyst  I use it to get a full picture of who from the outside world c
 
 ## 5. Combined Findings — Connecting the Three Queries 
 
-80.6#.##.## this IP is the most serious finding in this data set. It touched 4 separate corporate devices (Query 3), and on one of them — corp-na01-26 — it also appears in Query 2's results with 19 failed logons followed by 2 successful logons as the administrator account.
-This is a single external actor that tried multiple machines and successfully broke into at least one of them.
-95.217.##.### attacked the administrator account on two different devices (corp-378-204 and corp-na09-fe9), 40 failures each, succeeding once on both — the same external actor running the same attack against multiple targets.
-59.15.###.##, 111.68.###.###, and 201.187.##.### each ran the same pattern — dozens of failed administrator login attempts followed by exactly one success — against a single device each.
-By contrast, the high-volume entries in Query 3 (25, 18, 15, 12 logons from one IP to one personally-named VM) do not appear anywhere in the brute-force/success join — meaning no pile of failures preceded them.
-That's consistent with normal, legitimate remote access rather than an attack.
-The 1#.#.#.# entry (internal IP, root account, on the vulnerability-scanning host) is the one high-failure/high-success row that is expected and benign — it's the organization's own scan engine, not an external threat.
+80.6#.#.# this IP is the most serious finding in this data set. It touched 4 separate corporate devices (Query 3), and on one of them — Host-A — it also appears in Query 2’s results with 19 failed logons followed by 2 successful logons as the adm********* account. This is a single external actor that tried multiple machines and successfully broke into at least one of them. 95.217.#.# attacked the adm********* account on two different devices (Host-B and Host-C), 40 failures each, succeeding once on both — the same external actor running the same attack against multiple targets. 59.15.#.#, 111.68.#.#, and 201.187.#.# each ran the same pattern — dozens of failed adm********* login attempts followed by exactly one success — against a single device each. By contrast, the high-volume entries in Query 3 (25, 18, 15, 12 logons from one IP to one personally-named VM) do not appear anywhere in the brute-force/success join — meaning no pile of failures preceded them. That’s consistent with normal, legitimate remote access rather than an attack. The 1#.#.#.# entry (internal IP, r*** account, on the vulnerability-scanning host) is the one high-failure/high-success row that is expected and benign — it’s the organization’s own scan engine, not an external threat.
+
+September–October 2026 update. Re-running Query 2 with the time-ordered version confirmed the same pattern at a larger scale. Twelve public IPs broke into 19 hosts through the adm********* account, and in all 23 cases the failed logons came before the first success, with at least 14 failures each. Attacker 59.15.#.# alone broke into five hosts on four separate days, each within 13–25 minutes of its first failure, and four hosts were breached by two different attackers each. The 59.15.#.# and 80.6#.#.# ranges also appeared in August, which suggests the same operators returned.
 
 ## 6. Conclusion — What Is the Threat?
 
@@ -207,7 +203,7 @@ Put together, these three queries show that the environment is being actively ta
 ### The pattern:
 multiple external, unrelated public IP addresses are running automated brute-force attempts specifically against the built-in administrator account across several internet-facing devices.
 ### The outcome:
-at least five distinct public IPs succeeded in logging in after dozens of failed attempts — most seriously 80.##.##.##, which spread its attempts across four different machines and still broke through on one.
+five distinct public IPs succeeded in logging in after dozens of failed attempts in August, and twelve in September–October — most seriously 80.#.#.#, which spread its attempts across four different machines and still broke through on one.
 ### The false alarm to rule out:
 the internal scan engine (1#.#.#.#) produces the highest raw failure/success numbers in the whole data set, but it is normal internal security-tooling behavior, not an attacker — correctly separating this from the real external threats is what keeps the investigation focused on what actually matters.
 ### Bottom line:
