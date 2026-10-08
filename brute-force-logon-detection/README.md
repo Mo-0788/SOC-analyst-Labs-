@@ -72,6 +72,8 @@ this query answers the important follow-up question that Query 1 can't: did any 
 Then it joins the two lists together and keeps only the rows where there were more than 10 failures AND at least 1 success from that exact same combination. That pattern — many failures, then a success — is a strong sign an account was cracked, not just probed.
 
 
+earlier version of the query 
+
 <img width="1252" height="701" alt="failuresand then success all result with hidden IP " src="https://github.com/user-attachments/assets/ee2791a6-9352-4bc3-9fda-8c41a7dceb22" />
 
 
@@ -81,7 +83,7 @@ When a SOC analyst uses it: right after running Query 1, to separate "this was j
 What the result looks like: a table with AccountName, DeviceName, RemoteIP, Failures, Successes, and LastSuccess (the timestamp of the successful logon) — sorted with the highest failure counts first.
 this table is my real result of this query you can see the yellow highlighted is public IP address tried to get access as administrator 40 times and he gains the access one time.
 
-
+earlier version of the query
 <img width="776" height="640" alt="log table query 2 (try many time and get access)" src="https://github.com/user-attachments/assets/e1b3aa18-9ddf-4482-a259-6aae32f23059" />
 
 
@@ -90,6 +92,73 @@ Six of the ten rows target the built-in administrator account specifically — a
 root on linux-scan-break-fix-learn from 10.#.#.# (a private/internal IP) is your internal vulnerability-scanning engine authenticating repeatedly as part of normal scanning behavior — this is benign, not an attack. High failure counts here are expected because scanners often test many credential combinations by design.
 The annu and guest rows also come from internal/blank source IPs, consistent with internal automation/remediation accounts and lab test accounts rather than outside attackers.
 The genuinely concerning rows are the ones with a public source IP: 95.217.###.##, 59.15.1##.##, 111.68.10#.###, 201.###.98.###, and 80.66.##.## — each brute-forced the administrator account dozens of times and then succeeded at least once.
+
+## 3. Query 2: Did the Brute-Force Succeed? (Failures Before Success)
+
+Query 1 shows who is failing to log in. This query answers the follow-up: **did any of them get in, and did the failures come first?**
+
+### 3.1 The query
+
+```kql
+let startTime = datetime(2026-09-01 00:00:00);   // use the dates you ran
+let endTime   = now();
+// First successful logon for each account + device + source IP
+let firstSuccess =
+    DeviceLogonEvents
+    | where TimeGenerated between (startTime .. endTime)
+    | where ActionType == "LogonSuccess"
+    | summarize FirstSuccess = min(TimeGenerated) by AccountName, DeviceName, RemoteIP;
+// Count only failures that happened BEFORE that first success
+DeviceLogonEvents
+| where TimeGenerated between (startTime .. endTime)
+| where ActionType == "LogonFailed"
+| join kind=inner firstSuccess on AccountName, DeviceName, RemoteIP
+| where TimeGenerated < FirstSuccess
+| summarize FailuresBeforeSuccess = count(),
+            FirstFailure = min(TimeGenerated),
+            SuccessTime = any(FirstSuccess)
+    by AccountName, DeviceName, RemoteIP
+| where FailuresBeforeSuccess > 10
+| extend MinutesToBreakIn = datetime_diff('minute', SuccessTime, FirstFailure)
+| sort by FailuresBeforeSuccess desc
+```
+
+### 3.2 How it proves the failures came first
+
+| Step | What it does |
+|------|--------------|
+| 1 | Finds each account + device + source IP's **first successful logon** (`FirstSuccess`) |
+| 2 | Keeps only failed logons with `TimeGenerated < FirstSuccess`, so any failure after the success is thrown out |
+| 3 | Requires more than 10 of those earlier failures |
+| 4 | Reports `FirstFailure`, `SuccessTime` and `MinutesToBreakIn` so the order can be read directly from the results |
+
+My first version of this query counted failures and successes separately and joined them. It could not show which came first. This version can.
+
+### 3.3 Result (Sep–Oct 2026, masked)
+
+23 of 23 rows show the first failure earlier than the successful logon. None had a success before the failures. Every row has at least 14 failed attempts before the success.
+
+Sample rows:
+
+| Attacker | Host | Failures before success | First failure | Successful logon | Minutes to break in |
+|----------|------|------------------------|---------------|------------------|---------------------|
+| B (59.15.#.#) | H02 | 40 | Sep 19, 11:07:10 AM | Sep 19, 11:20:46 AM | 13 |
+| G (80.66.#.#) | H03 | 24 | Sep 30, 12:58:54 PM | Sep 30, 1:58:05 PM | 60 |
+| A (193.142.#.#) | H01 | 44 | Sep 17, 8:51:57 PM | Sep 18, 2:13:27 PM | 1,042 |
+| H (103.109.#.#) | H13 | 20 | Sep 17, 11:57:07 AM | Sep 21, 3:13:41 PM | 5,956 |
+
+<img width="1270" height="662" alt="confirmed login after failled updated" src="https://github.com/user-attachments/assets/30b56675-bb73-4516-b141-23b192ed0a78" />
+
+
+<img width="1188" height="590" alt="full table of result masked " src="https://github.com/user-attachments/assets/36d68f03-7585-4765-9f36-28d8b805b9b5" />
+
+
+### 3.4 What it means
+
+- **12 attacker IPs** broke into **19 hosts**, all through the built-in administrator account (masked `adm*********`).
+- **8 of 23** went from first failure to success in 15 minutes or less, and 8 had exactly 40 failures. That pattern looks automated.
+- Some attacks were slow. One IP failed 20 times over about four days before succeeding, which can slip under simple alert thresholds.
+- **Limit:** this proves many failures came before a success. It does not prove what the attacker did afterward. That needs a separate follow-up hunt.
 
 
 ## 4. Query 3 — Remote Interactive Logons from External (Public) IPs
