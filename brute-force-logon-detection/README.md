@@ -20,8 +20,7 @@ Run in this order, these three queries take an analyst from "something looks noi
 
 ## 2. Query 1 — Failed Logons / Brute-Force Detection 
 
-```kusto
-// Set your investigation window once at the top, reuse it everywhere. or you can remove it in case you want all time which is a lot of data 
+```kusto 
 let startTime = datetime(2026-08-01 00:00:00);
 let endTime   = datetime(2026-08-02 00:00:00);
 // USE CASE 1: Failed logons / brute-force detection
@@ -50,6 +49,8 @@ What the result looks like: a table with RemoteIP, DeviceName, FailureReason, a 
 
 ## 3. Query 2 — Successful Logon Following Failures
 ```kusto
+let startTime = datetime(2026-08-01 00:00:00);
+let endTime   = datetime(2026-08-02 00:00:00);
 let failures =
 DeviceLogonEvents
     | where ActionType == "LogonFailed"
@@ -93,6 +94,8 @@ The genuinely concerning rows are the ones with a public source IP: 95.217.###.#
 
 ## 4. Query 3 — Remote Interactive Logons from External (Public) IPs
 ```kusto
+let startTime = datetime(2026-08-01 00:00:00);
+let endTime   = datetime(2026-08-02 00:00:00);
 DeviceLogonEvents
 | where ActionType == "LogonSuccess"
 | where LogonType in ("RemoteInteractive", "Network", "Unlock")
