@@ -104,7 +104,7 @@ In the screenshot below the status is onboarded
 ### 3.4 Quick check with KQL (Advanced hunting)
 ```kusto
 DeviceInfo
-| where DeviceName startswith "abd"
+| where DeviceName startswith "your VM name here"
 | project Timestamp, DeviceName, OnboardingStatus, SensorHealthState
 ```
 Before onboarding, `OnboardingStatus` was **Can be onboarded** and `DeviceProcessEvents` returned no rows. After onboarding, process events appeared.
