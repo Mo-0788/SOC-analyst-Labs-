@@ -65,8 +65,6 @@ A hands-on lab write-up. I collected an **investigation package** from a Windows
 
 ### 3.2 Onboard the VM to Defender for Endpoint
 My VM first showed as **"Can be onboarded"** and all response actions were greyed out. A device must be **onboarded** before you can collect a package.
-<img width="1272" height="677" alt="onboarding steps" src="https://github.com/user-attachments/assets/fdbec172-4b77-4235-815d-f76493060412" />
-
 
 1. In the portal: **Settings → Endpoints → Onboarding**.
 2. Choose **Windows 10 and 11**, **Local script**, connectivity type **Streamlined**.
@@ -95,10 +93,8 @@ In the screenshot below the status is onboarded
 5. The status is **Pending** at first. Refresh until the package is ready (it took longer than 10 minutes).
 6. Download the zip file and unzip it.
 
-   <img width="1260" height="655" alt="collection package in red circl" src="https://github.com/user-attachments/assets/9ffcd277-38cb-41ac-8255-ef0518e4d668" />
+ <img width="1273" height="613" alt="action center2" src="https://github.com/user-attachments/assets/7dce4a37-f0bd-409f-bf4d-474bc0064e3b" />
 
-
-<img width="1268" height="751" alt="MDE investigation screenshot 1" src="https://github.com/user-attachments/assets/4ef67a7b-da24-4374-8f26-d7cac1a64ad6" />
 
 > Tip: collection can fail if the device has low battery or a metered connection.
 
@@ -129,14 +125,14 @@ Before onboarding, `OnboardingStatus` was **Can be onboarded** and `DeviceProces
 | `System Information` | OS version, boot time, network adapters |
 | `WdSupportLogs` | Microsoft Defender Antivirus support logs |
 
+unzipped investigation file
+<img width="1268" height="751" alt="MDE investigation screenshot 1" src="https://github.com/user-attachments/assets/e034da5b-58c2-4367-a1d8-a1c5a35ed2c7" />
+
 Autoruns
 <img width="1265" height="721" alt="Autoruns" src="https://github.com/user-attachments/assets/a69a18a3-9979-4bb3-9f33-d586da56f6c1" />
 
 Prefetch Files
 <img width="1239" height="682" alt="prefetch" src="https://github.com/user-attachments/assets/66f8f5e8-563d-4314-a16b-b0633e679def" />
-
-
-<img width="1268" height="751" alt="MDE investigation screenshot 1" src="https://github.com/user-attachments/assets/e034da5b-58c2-4367-a1d8-a1c5a35ed2c7" />
 
 
 **Collection check:** `Forensics Collection Summary.csv` lists **70 commands, all `Completed`, error code 0.** The package is complete.
