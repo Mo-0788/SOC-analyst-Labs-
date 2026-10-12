@@ -95,6 +95,9 @@ In the screenshot below the status is onboarded
 
  <img width="1273" height="613" alt="action center2" src="https://github.com/user-attachments/assets/7dce4a37-f0bd-409f-bf4d-474bc0064e3b" />
 
+ unzipped investigation file
+<img width="1268" height="751" alt="MDE investigation screenshot 1" src="https://github.com/user-attachments/assets/e034da5b-58c2-4367-a1d8-a1c5a35ed2c7" />
+
 
 > Tip: collection can fail if the device has low battery or a metered connection.
 
@@ -125,8 +128,6 @@ Before onboarding, `OnboardingStatus` was **Can be onboarded** and `DeviceProces
 | `System Information` | OS version, boot time, network adapters |
 | `WdSupportLogs` | Microsoft Defender Antivirus support logs |
 
-unzipped investigation file
-<img width="1268" height="751" alt="MDE investigation screenshot 1" src="https://github.com/user-attachments/assets/e034da5b-58c2-4367-a1d8-a1c5a35ed2c7" />
 
 Autoruns
 <img width="1265" height="721" alt="Autoruns" src="https://github.com/user-attachments/assets/a69a18a3-9979-4bb3-9f33-d586da56f6c1" />
