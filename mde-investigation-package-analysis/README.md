@@ -16,6 +16,7 @@
    - [Finding 2: Tor Browser ran](#finding-2-tor-browser-ran-on-the-vm-medium)
    - [Finding 3: The live snapshot is clean](#finding-3-the-live-snapshot-is-clean-info)
    - [Finding 4: Onboarding changed the machine](#finding-4-defender-onboarding-changed-the-machine-info)
+   -[Finding 5: Defender alerts on the device](#finding-5-defender-alerts-on-the-device-info)
 6. [Timeline](#6-timeline-utc)
 7. [Limits of this investigation](#7-limits-of-this-investigation)
 8. [Lessons learned](#8-lessons-learned)
@@ -37,19 +38,21 @@ A hands-on lab write-up. I collected an **investigation package** from a Windows
 
 | # | Finding | Importance |
 |---|---------|-----------|
-| 1 | **7,205 failed network logons** from **6 outside IP addresses** over about 8.5 hours. Most tried the user names `Administrator` and `admin`. | **High** |
+| 1 | **7,205 failed network logons** from **6 outside IP addresses** over about 8.5 hours. Most tried the user names `Administrator` and `admin`. The lab network is open on purpose (honeypot-style), so this is expected. | **High** (expected in this lab) |
 | 2 | **No successful logon from any of those outside IPs.** All successful logons came from internal `10.0.8.x` addresses (consistent with Azure Bastion), using the one admin account. | Good news |
 | 3 | **Tor Browser (portable)** was run from the Desktop on 10 Oct 2026. Defender's package shows it in Prefetch and in the Background Activity Moderator (BAM) registry data, **not** in Installed Programs. | Medium (expected in this lab) |
 | 4 | The **live snapshot is clean**: no suspicious processes, no strange network connections, no extra accounts, no unknown scheduled tasks. | Info |
 | 5 | The collection itself worked: **70 of 70 commands completed with no errors.** | Info |
+| 6 | Defender showed **Risk level: High** with **22 alerts** on the device. Most come from the internet attack, my own test activity, and shared lab detection rules. | Info |
 
-**Most important finding:** the VM was being **password-guessed from the internet**. This is a real risk even in a lab. The logs show it did not succeed, but the VM should not be reachable this way.
+**Most important finding:** the VM was being **password-guessed from the internet**. This is expected here, because the lab network is **intentionally open**, like a honeypot (see Finding 1). The logs show no attempt succeeded. On a real network, this kind of exposure would be a serious risk.
 
 ---
 
 ## 2. Lab setup
 
 - Windows 11 Pro virtual machine in Azure (connected through Azure Bastion)
+- The VM is in our community lab. The network is kept **open to the internet on purpose** (honeypot-style) to attract attackers and create security logs to study.
 - Microsoft Defender for Endpoint (MDE) in a training tenant
 - Test activity on the VM:
   - A folder with two sample files: `corporate_report.txt` and `corporate_earnings.txt`
@@ -158,7 +161,9 @@ Prefetch Files
 | Busiest time | 21:00 to 22:59 UTC (about 4,000 attempts) |
 | Reason for failure | Almost all: "user name does not exist" (`0xC0000064`) |
 
-**What it means:** This looks like automatic password guessing (brute force or password spraying) with common admin user names. The attempts reached the VM over the network, which suggests that a network service (such as RDP) was reachable from the internet. The event log does not say which port, so I need to check the VM's network rules.
+**What it means:** This looks like automatic password guessing (brute force or password spraying) with common admin user names. The attempts reached the VM over the network.
+
+**Why it happened:** The VM has a public IP, and the subnet's Network Security Group (NSG) has an inbound rule named `DANGER-allow-all-inbound` (priority 1000). It allows **any port, any protocol, from any source**, so anyone on the internet can reach the VM. The rule is **intentional**: the Cyber Range community keeps these VMs open like a honeypot to attract attackers and test detection. I did not change it. (The default rule `DenyAllInBound` would block the internet if this rule did not exist.)
 
 **Did it work?** I checked successful logons (Event ID **4624**):
 - No successful logon came from any of the 6 outside IPs.
@@ -169,7 +174,8 @@ Prefetch Files
 **Small note:** Two failed attempts used the user name `guest` with a "wrong password" result. That means the name exists as an account. It is normally disabled, but it is worth confirming.
 
 **Recommended actions**
-1. Do not expose RDP or other management ports to the internet. Allow access only through Azure Bastion, or a restricted source address.
+**What I would do on a real network** (in this lab the open rule is on purpose, so I changed nothing)
+1. Delete any rule that allows all inbound traffic. Allow access only through Azure Bastion, or from a restricted source address.
 2. Review the Network Security Group (NSG) and any public IP on the VM.
 3. Use account lockout, strong passwords, and MFA where possible.
 4. Rename or disable default admin names when possible.
@@ -225,6 +231,35 @@ The package is a snapshot of the machine at **23:25 UTC**. The VM was restarted 
 - Defender sensor programs (`MsSense.exe`, `SenseIR.exe`, `SenseNdr.exe`, `SenseTVM.exe`) started at **23:22 to 23:23 UTC**.
 - Windows **audit policy** was changed 12 times at **23:22:35 UTC** by the machine account (Event 4719). This is normal during onboarding.
 
+### Finding 5: Defender alerts on the device (Info)
+**Where I found it:** Defender portal → device page → *Incidents and alerts*, and this KQL query in Advanced hunting:
+
+```kusto
+AlertInfo
+| join kind=inner (
+    AlertEvidence
+    | where DeviceName startswith "abd"
+    | distinct AlertId
+  ) on AlertId
+| project Timestamp, Title, Severity, Category
+| sort by Timestamp desc
+```
+
+The device page showed **Risk level: High** (22 active alerts: 3 High, 19 Medium) and **Exposure level: Medium** (69 security recommendations). Risk comes from **alerts**. Exposure comes from **weaknesses**, like missing updates. They are two different scores.
+
+| Alert | Count | Severity | Likely source |
+|---|---|---|---|
+| Brute Force or Password Spraying Attack Detected | 2 | **High** | The internet attack in Finding 1 |
+| Brute Force 10+ attempts from same remote IP to same device | 2 | Medium | The same attack |
+| SOC-BUILD-EXEC-PWSHSUSP-T1059.001 (suspicious PowerShell) | 1 | **High** | A PowerShell test I ran after onboarding |
+| SOC-BUILD-DISCOVERY-ACCTENUM-T1087 (account discovery) | 9 | Medium | The package collection itself runs about 10 `net.exe` commands to list users and groups |
+| SOC-BUILD-COLLECT-DATASTAGED-T1074 (101 files) | 2 | Medium | Possibly a test script that creates many files |
+| "Create Alert Rule (Brute Force Attempt Detection)" | 6 | Medium | Detection rules made by other lab members. They watch the whole shared tenant, so they also fire on my VM. |
+
+> Alert times are shown in local time (about UTC-7). The "likely source" column is my reading of the alert titles and timing. Open each alert's *Alert story* to confirm.
+
+**Lesson:** a High risk level does not always mean a real compromise. Check where each alert comes from (real attack, test activity, or someone else's rule).
+
 ---
 
 ## 6. Timeline (UTC)
@@ -261,6 +296,7 @@ The package is a snapshot of the machine at **23:25 UTC**. The VM was restarted 
 4. Check **more than one source**. Tor was missing from Installed Programs but clear in Prefetch and BAM.
 5. A package may show an unexpected risk. I came to look at Tor and found internet password guessing in the Security log.
 6. Mask sensitive data (names, IPs, IDs) before sharing any write-up.
+7. Know your environment. An exposed network and many alerts can be **intentional**, like in a honeypot lab. Check the network rules before you call something a mistake.
 
 ---
 
